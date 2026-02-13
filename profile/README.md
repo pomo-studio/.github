@@ -2,7 +2,7 @@
 
 Open source infrastructure for the modern web.
 
-We build reusable Terraform modules and serverless patterns for AWS — opinionated, production-ready, zero static credentials.
+We build reusable Terraform modules and serverless patterns for AWS — opinionated, hardened, production-ready.
 
 ### Projects
 
