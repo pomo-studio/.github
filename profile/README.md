@@ -10,7 +10,7 @@ We build reusable Terraform modules and serverless patterns for AWS — opiniona
 |---|---|
 | [terraform-aws-serverless-ssr](https://github.com/pomo-studio/terraform-aws-serverless-ssr) | Multi-region serverless SSR on AWS — CloudFront, Lambda, S3, optional DynamoDB |
 | [terraform-aws-oidc](https://github.com/pomo-studio/terraform-aws-oidc) | Full OIDC lifecycle on AWS — identity provider + scoped IAM roles |
-| [terraform-tfc-workspace](https://github.com/pomo-studio/terraform-tfc-workspace) | VCS-driven Terraform Cloud workspaces with optional OIDC credentials |
+| [terraform-tfe-workspace](https://github.com/pomo-studio/terraform-tfe-workspace) | VCS-driven Terraform Cloud workspaces with optional OIDC credentials |
 
 ### Sites
 
