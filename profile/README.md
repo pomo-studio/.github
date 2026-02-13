@@ -1,12 +1,25 @@
-## Hi there 👋
+# postmodern.
 
-<!--
+Open source infrastructure for the modern web.
 
-**Here are some ideas to get you started:**
+We build reusable Terraform modules and serverless patterns for AWS — opinionated, production-ready, zero static credentials.
 
-🙋‍♀️ A short introduction - what is your organization all about?
-🌈 Contribution guidelines - how can the community get involved?
-👩‍💻 Useful resources - where can the community find your docs? Is there anything else the community should know?
-🍿 Fun facts - what does your team eat for breakfast?
-🧙 Remember, you can do mighty things with the power of [Markdown](https://docs.github.com/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
--->
+### Projects
+
+| Repository | Description |
+|---|---|
+| [serverless-ssr-module](https://github.com/pomo-studio/serverless-ssr-module) | Multi-region serverless SSR on AWS — CloudFront, Lambda, S3, optional DynamoDB |
+| [terraform-aws-oidc](https://github.com/pomo-studio/terraform-aws-oidc) | Full OIDC lifecycle on AWS — identity provider + scoped IAM roles |
+| [terraform-tfc-workspace](https://github.com/pomo-studio/terraform-tfc-workspace) | VCS-driven Terraform Cloud workspaces with optional OIDC credentials |
+
+### Sites
+
+- **[pomo.dev](https://pomo.dev)** — patterns, experiments, open source
+- **[pomo.studio](https://pomo.studio)** — cloud infrastructure for ambitious fintech teams
+
+### Principles
+
+- OIDC everywhere — no static AWS keys
+- Terraform Cloud for all deployments — never run locally
+- Multi-region by default — us-east-1 + us-west-2 failover
+- Least privilege — scoped IAM per project prefix
