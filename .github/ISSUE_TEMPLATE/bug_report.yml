@@ -1,0 +1,30 @@
+name: Bug report
+description: Report a reproducible module problem, not a security vulnerability.
+body:
+  - type: markdown
+    attributes:
+      value: "For vulnerabilities use Security > Advisories > Report a vulnerability. Do not post secrets, raw state, or plans."
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions
+      description: Module, Terraform, providers, and affected example.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal sanitized reproduction
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Validation evidence
+      description: Distinguish validate, mock test, plan, upgrade, and apply. Share sanitized summaries only.
