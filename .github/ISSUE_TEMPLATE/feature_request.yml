@@ -1,0 +1,19 @@
+name: Feature request
+description: Propose a focused module improvement.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and affected module
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed interface and alternatives
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Compatibility, security, DR, and cost implications
