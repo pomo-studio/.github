@@ -27,7 +27,7 @@ while keeping your architecture understandable and yours to operate.
 
 ## People And Contributions
 
-Supported by [Pomo Studio](https://pomo.studio), we use these building blocks in
+Supported by [postmodern.](https://pomo.studio), we use these building blocks in
 our own applications. Share a use case, improve an explanation, or contribute a
 tested fix.
 
