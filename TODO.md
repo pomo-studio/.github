@@ -30,3 +30,11 @@ Organization-wide follow-ups. Capture things here rather than leaving them in ch
 - Closed 13 stale maintenance PRs; merged the one genuinely behind (`event-consumer`).
 - Fixed a broken `terraform-docs` check in `serverless-ssr` (`--check` was an unsupported flag; switched to `fail-on-diff`).
 - Removed a stale required check (`CloudFront -> Lambda GET`) that was blocking all `serverless-ssr` merges.
+
+## README quality
+
+Foundation is live in `pomo-studio/.github` (`docs/README-GUIDE.md`, `templates/README.template.md`, `.markdownlint-cli2.jsonc`, `.vale.ini` + `styles/pomo`, `scripts/check-readme-sections.sh`, reusable `readme-quality` workflow). Callers run in report-only mode.
+
+- [ ] **Bring module READMEs up to the standard.** Remove duplicated generated tables (for example `event-consumer` repeats Inputs/Outputs/Requirements), move the generated reference to the end, wrap it in `<details>`.
+- [ ] **Clear the findings** the checks surface: duplicate headings (`MD024`) and em dashes / AI-tell vocabulary (`pomo.NoEmDash`, `pomo.AITells`).
+- [ ] **Flip the `readme-quality` callers to `strict: true`** once READMEs are clean, so the checks block.
