@@ -51,29 +51,33 @@ afterward.
 
 ## Setting up an acceptance workspace
 
-One workspace per module that has a live example. The steps assume the Terraform
-Cloud organization `Pitangaville` and use `cloudfront-vpc-origin` as the example.
+One workspace per module that has a live example. Workspaces are declared in
+`pomo-studio/pomo`, not created by hand, so the configuration, the IAM role, and
+the trust policy stay in version control. The `appsync-example` workspace is the
+model.
 
-1. **Create the workspace.** Terraform Cloud, organization `Pitangaville`, new
-   workspace, version control workflow. Connect the module repository
-   (`pomo-studio/terraform-aws-cloudfront-vpc-origin`) on the `main` branch.
-2. **Name it** `<module>-acceptance`, for example
-   `cloudfront-vpc-origin-acceptance`.
-3. **Advanced settings.**
-   - Terraform Working Directory: `examples/live`
-   - Terraform Version: `1.9.0`, the floor the module declares
-   - Apply Method: manual apply, so the workflow's approval is the authorization
-4. **Give it AWS credentials.** Prefer dynamic provider credentials: set the
-   workspace variables `TFC_AWS_PROVIDER_AUTH=true` and `TFC_AWS_RUN_ROLE_ARN` to
-   a role in the sandbox account that trusts Terraform Cloud as an OIDC provider.
-   Otherwise add `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as sensitive
-   environment variables. Use a sandbox account, never production.
-5. **Create a token.** A Terraform Cloud team token scoped to the acceptance
-   workspaces, or a user token. Store it as the `TF_API_TOKEN` repository secret
-   on the module repository.
-6. **Dispatch.** Actions, `Live acceptance`, Run workflow. Leave `skip_destroy`
-   off.
-7. **Confirm.** The apply run reaches `applied`, the workflow triggers a destroy
+1. **Add an OIDC role** in `oidc.tf` under `module "tfc_oidc"`'s `roles` map. Scope
+   the trust to one workspace:
+   `organization:<org>:project:*:workspace:<name>:run_phase:*`, and give it a
+   policy limited to what the example creates. Where resource ARNs carry the
+   resource name (load balancer, target group, listener), scope by the
+   `acceptance-` prefix; where they do not (VPC, subnet, security group) and for
+   CloudFront, the statement is account-wide, which is why the trust is narrow.
+2. **Add the workspace** in `terraform_cloud.tf` with the `pomo-studio/workspace/tfe`
+   module: `vcs_repo` the module repository, `working_directory = "examples/live"`,
+   `terraform_version` the module's floor, `auto_apply` off, and `role_arn` built
+   as a string from the account id. Do not read the ARN from
+   `module.tfc_oidc.role_arns[...]`: a brand-new role's ARN is unknown at plan
+   time, and the workspace module gates its OIDC variable set on it.
+3. **Apply `pomocore`.** Pushing to `main` queues a plan and a human confirms it.
+   That creates the role and the workspace and wires the OIDC dynamic credentials.
+4. **Add the token.** Create a Terraform Cloud user token and store it as the
+   `TF_API_TOKEN` repository secret on the module repository, so the workflow can
+   trigger runs.
+5. **Dispatch.** Actions, `Live acceptance`, Run workflow. Leave `skip_destroy`
+   off. A VCS-triggered run from the workspace's creation may already be waiting;
+   the workflow finds the run for the commit and approves it.
+6. **Confirm.** The apply run reaches `applied`, the workflow triggers a destroy
    run, and the job finishes green. Note the duration and the cost.
 
 The workspace is ephemeral in spirit: it holds the state between the apply and
@@ -94,7 +98,7 @@ Copy the shape of `cloudfront-vpc-origin/examples/live` and `tests/plan.tftest.h
   `AutoDestroy = "true"`.
 - [ ] Add the example to the `validate` matrix in `terraform.yml`.
 - [ ] Add credential-free `tests/plan.tftest.hcl`.
-- [ ] Create the acceptance workspace and the `TF_API_TOKEN` secret.
+- [ ] Declare the acceptance workspace and its OIDC role in `pomo-studio/pomo`, and add the `TF_API_TOKEN` secret.
 - [ ] Add `.github/workflows/acceptance.yml` from an existing module.
 - [ ] Dispatch once and confirm apply and destroy.
 
