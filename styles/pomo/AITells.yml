@@ -1,0 +1,14 @@
+extends: substitution
+message: "Prefer '%s' (AI-tell vocabulary)."
+level: warning
+ignorecase: true
+swap:
+  'delve(?:s|d)?': explore
+  'leverage(?:s|d|ing)?': use
+  'robust': strong
+  'comprehensive': complete
+  'seamless(?:ly)?': smooth
+  'meticulous(?:ly)?': careful
+  'holistic(?:ally)?': whole
+  'pivotal': key
+  'utilize(?:s|d|ing)?': use

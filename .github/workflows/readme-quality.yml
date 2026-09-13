@@ -1,0 +1,48 @@
+name: README quality
+
+# Reusable: lint a module README for structure (markdownlint) and prose (Vale),
+# and check it has the canonical sections.
+#
+# `strict` is false by default so it reports without blocking while existing
+# READMEs are brought up to the standard. Flip callers to strict: true once clean.
+
+on:
+  workflow_call:
+    inputs:
+      strict:
+        description: Fail the job when findings exist
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Check out the shared standards
+        uses: actions/checkout@v4
+        with:
+          repository: pomo-studio/.github
+          path: .pomo-standards
+
+      - name: markdownlint
+        continue-on-error: ${{ !inputs.strict }}
+        run: npx --yes markdownlint-cli2 --config .pomo-standards/.markdownlint-cli2.jsonc README.md
+
+      - name: Vale (prose)
+        continue-on-error: ${{ !inputs.strict }}
+        uses: errata-ai/vale-action@v2.1.1
+        with:
+          files: README.md
+          reporter: local
+          fail_on_error: "false"
+          vale_flags: "--config=.pomo-standards/.vale.ini --minAlertLevel=warning"
+
+      - name: Required sections
+        continue-on-error: ${{ !inputs.strict }}
+        run: bash .pomo-standards/scripts/check-readme-sections.sh README.md
