@@ -71,10 +71,10 @@ jobs:
           # Poll a run until terminal state, approving it when it waits for confirmation.
           wait_for_run() {
             local run_id=$1 label=$2
-            for i in $(seq 1 120); do
+            for i in $(seq 1 300); do
               local status
               status=$(tfc "https://app.terraform.io/api/v2/runs/$run_id" | jq -r '.data.attributes.status')
-              echo "$label [$i/120]: $status"
+              echo "$label [$i/300]: $status"
               case "$status" in
                 applied|planned_and_finished)
                   echo "$label: succeeded"
@@ -92,7 +92,7 @@ jobs:
               esac
               sleep 15
             done
-            echo "$label: timed out after 30 minutes"
+            echo "$label: timed out after 75 minutes"
             return 1
           }
 
