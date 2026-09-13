@@ -34,14 +34,16 @@ jobs:
         continue-on-error: ${{ !inputs.strict }}
         run: npx --yes markdownlint-cli2 --config .pomo-standards/.markdownlint-cli2.jsonc README.md
 
+      - name: Install Vale
+        run: |
+          curl -fsSL "https://github.com/errata-ai/vale/releases/download/v3.21.0/vale_3.21.0_Linux_64-bit.tar.gz" -o /tmp/vale.tar.gz
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf /tmp/vale.tar.gz -C "$RUNNER_TEMP/bin" vale
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
       - name: Vale (prose)
         continue-on-error: ${{ !inputs.strict }}
-        uses: errata-ai/vale-action@v2.1.1
-        with:
-          files: README.md
-          reporter: local
-          fail_on_error: "false"
-          vale_flags: "--config=.pomo-standards/.vale.ini --minAlertLevel=warning"
+        run: vale --config=.pomo-standards/.vale.ini --minAlertLevel=warning README.md
 
       - name: Required sections
         continue-on-error: ${{ !inputs.strict }}
