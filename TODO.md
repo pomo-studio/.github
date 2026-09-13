@@ -33,8 +33,7 @@ Organization-wide follow-ups. Capture things here rather than leaving them in ch
 
 ## README quality
 
-Foundation is live in `pomo-studio/.github` (`docs/README-GUIDE.md`, `templates/README.template.md`, `.markdownlint-cli2.jsonc`, `.vale.ini` + `styles/pomo`, `scripts/check-readme-sections.sh`, reusable `readme-quality` workflow). Callers run in report-only mode.
+Live and enforced. The standard is in `pomo-studio/.github` (`docs/README-GUIDE.md`, `templates/README.template.md`, `.markdownlint-cli2.jsonc`, `.vale.ini` + `styles/pomo`, `scripts/check-readme-sections.sh`, reusable `readme-quality` workflow). All 14 module READMEs were brought to the canonical layout and the checks now block (`strict: true`).
 
-- [ ] **Bring module READMEs up to the standard.** Remove duplicated generated tables (for example `event-consumer` repeats Inputs/Outputs/Requirements), move the generated reference to the end, wrap it in `<details>`.
-- [ ] **Clear the findings** the checks surface: duplicate headings (`MD024`) and em dashes / AI-tell vocabulary (`pomo.NoEmDash`, `pomo.AITells`).
-- [ ] **Flip the `readme-quality` callers to `strict: true`** once READMEs are clean, so the checks block.
+- [ ] Start new modules from `templates/README.template.md`.
+- [ ] Update the shared standard when the house style changes; callers pick it up automatically.
