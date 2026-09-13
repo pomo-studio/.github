@@ -33,7 +33,7 @@ Organization-wide follow-ups. Capture things here rather than leaving them in ch
 
 ## README quality
 
-Live and enforced. The standard is in `pomo-studio/.github` (`docs/README-GUIDE.md`, `templates/README.template.md`, `.markdownlint-cli2.jsonc`, `.vale.ini` + `styles/pomo`, `scripts/check-readme-sections.sh`, reusable `readme-quality` workflow). All 14 module READMEs were brought to the canonical layout and the checks now block (`strict: true`).
+Live and enforced. The standard is in `pomo-studio/.github` (`docs/README-GUIDE.md`, `templates/README.template.md`, `.markdownlint-cli2.jsonc`, `.vale.ini` + `styles/pomo`, `scripts/check-readme-sections.sh`, reusable `readme-quality` workflow). All 14 module READMEs were brought to the canonical layout, including when-to-use, design decisions, and examples, and the checks now block (`strict: true`). The sections check requires an intro/usage heading, a Design decisions section, and the generated reference.
 
 - [ ] Start new modules from `templates/README.template.md`.
 - [ ] Update the shared standard when the house style changes; callers pick it up automatically.
