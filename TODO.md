@@ -28,7 +28,8 @@ Organization-wide follow-ups. Capture things here rather than leaving them in ch
 
 - Enabled Dependabot plus squash auto-merge across 14 module repos; added the shared reusable workflow in `pomo-studio/.github`.
 - Closed 13 stale maintenance PRs; merged the one genuinely behind (`event-consumer`).
-- Fixed a broken `terraform-docs` check in `serverless-ssr` (`--check` was an unsupported flag; switched to `fail-on-diff`).
+- Fixed the broken `terraform-docs` Docs Check (`args: --check` is an unsupported flag; switched to `fail-on-diff`) in `serverless-ssr` and `cognito-auth`.
+- Confirmed all 14 module `terraform.yml` badges are green on `main`, re-dispatching where the last run predated the README work.
 - Removed a stale required check (`CloudFront -> Lambda GET`) that was blocking all `serverless-ssr` merges.
 
 ## README quality
