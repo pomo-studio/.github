@@ -18,6 +18,7 @@ grep -q 'BEGIN_TF_DOCS' "$readme"         || report "missing the generated refer
 grep -q 'END_TF_DOCS' "$readme"           || report "missing the generated reference block (END_TF_DOCS)"
 grep -qiE '^#{2,3} (Usage|Using it|Quick ?start|What you get|What it creates|When to use)' "$readme" \
                                           || report "missing a usage/intro section"
+grep -qiE '^## Design decisions' "$readme" || report "missing a design decisions section"
 
 if [ "$status" -eq 0 ]; then
   echo "README structure ok"
