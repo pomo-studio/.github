@@ -21,6 +21,18 @@ Record the exact commit, example, workspace, configuration version, run URL, pla
 
 Applies, destroys, state surgery, new workspaces, and expanded IAM permissions require separate explicit authorization. No automatic apply/destroy is part of maintenance CI. Never substitute a production smoke check or an unrelated latest run for candidate-specific evidence.
 
+### Live acceptance
+
+A module may carry a self-contained `examples/live` and a non-production
+Terraform Cloud acceptance workspace, VCS-connected to the repository with its
+working directory set to that example and AWS credentials stored on the
+workspace. A maintainer dispatches the shared `module-acceptance` workflow; it
+approves the run for the commit, waits, then triggers a destroy. The apply and
+destroy run in Terraform Cloud and the workflow only orchestrates through the
+API, so cloud credentials never reach GitHub Actions and nothing runs
+automatically. Run it before tagging a release and treat a green run as the
+release gate for that version.
+
 ## Releases And Dependencies
 
 Weekly Dependabot PRs group minor/patch updates and limit queue size. Terraform major updates are intentionally excluded: propose compatibility changes explicitly and test them. Action majors remain individually reviewable. No dependency updates are auto-merged.

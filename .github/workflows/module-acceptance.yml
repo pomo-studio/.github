@@ -1,0 +1,135 @@
+name: Module acceptance
+
+# Reusable: run the acceptance example in Terraform Cloud, then destroy it.
+# Apply and destroy execute in a non-production Terraform Cloud workspace, so
+# cloud credentials stay in Terraform Cloud and the workflow only orchestrates
+# through the API. Dispatch it deliberately; it never runs automatically, which
+# keeps it within the contribution guide's rule that applies and destroys need
+# explicit authorization.
+#
+# The workspace must be VCS-connected to the calling repository, with its working
+# directory set to the example (for example `examples/live`), AWS credentials
+# configured, and Terraform pinned to the module's declared floor.
+
+on:
+  workflow_call:
+    inputs:
+      organization:
+        description: Terraform Cloud organization
+        type: string
+        default: Pitangaville
+      workspace:
+        description: Terraform Cloud workspace that runs the acceptance example
+        type: string
+        required: true
+      skip_destroy:
+        description: Leave the example in place for debugging; never set this for a release gate
+        type: boolean
+        default: false
+      timeout_minutes:
+        description: Job timeout, bounding the cost of a stuck run
+        type: number
+        default: 60
+    secrets:
+      TF_API_TOKEN:
+        description: Terraform Cloud API token with access to the workspace
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    name: Apply and destroy in Terraform Cloud
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    steps:
+      - name: Apply, assert, then destroy
+        env:
+          TFC_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          TFC_ORGANIZATION: ${{ inputs.organization }}
+          TFC_WORKSPACE: ${{ inputs.workspace }}
+          SKIP_DESTROY: ${{ inputs.skip_destroy }}
+          COMMIT_SHA: ${{ github.sha }}
+          RUN_LINK: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          tfc() { curl -sf -H "Authorization: Bearer $TFC_TOKEN" "$@"; }
+
+          # Poll a run until terminal state, approving it when it waits for confirmation.
+          wait_for_run() {
+            local run_id=$1 label=$2
+            for i in $(seq 1 120); do
+              local status
+              status=$(tfc "https://app.terraform.io/api/v2/runs/$run_id" | jq -r '.data.attributes.status')
+              echo "$label [$i/120]: $status"
+              case "$status" in
+                applied|planned_and_finished)
+                  echo "$label: succeeded"
+                  return 0 ;;
+                errored|canceled|force_canceled|discarded)
+                  echo "$label: FAILED ($status)"
+                  return 1 ;;
+                planned|cost_estimated)
+                  echo "$label: approving"
+                  curl -sf -X POST \
+                    -H "Authorization: Bearer $TFC_TOKEN" \
+                    -H "Content-Type: application/vnd.api+json" \
+                    -d '{"comment":"auto-approved by module acceptance"}' \
+                    "https://app.terraform.io/api/v2/runs/$run_id/actions/apply" > /dev/null ;;
+              esac
+              sleep 15
+            done
+            echo "$label: timed out after 30 minutes"
+            return 1
+          }
+
+          # Resolve the workspace.
+          WS_ID=$(tfc "https://app.terraform.io/api/v2/organizations/$TFC_ORGANIZATION/workspaces/$TFC_WORKSPACE" | jq -r '.data.id')
+          echo "Workspace $TFC_WORKSPACE: $WS_ID"
+
+          # Find the run for this commit. Terraform Cloud creates it on push when
+          # the workspace is VCS-connected.
+          RUN_ID=""
+          for i in $(seq 1 30); do
+            RUN_ID=$(tfc "https://app.terraform.io/api/v2/workspaces/$WS_ID/runs?page%5Bsize%5D=10" \
+              | jq -r --arg sha "$COMMIT_SHA" '.data[] | select(.attributes["source-version"] == $sha) | .id' \
+              | head -1)
+            [ -n "$RUN_ID" ] && break
+            echo "Waiting for a run for $COMMIT_SHA ($i/30)"
+            sleep 10
+          done
+
+          if [ -z "$RUN_ID" ]; then
+            echo "::error::No Terraform Cloud run found for $COMMIT_SHA. Is $TFC_WORKSPACE VCS-connected to this repository?"
+            exit 1
+          fi
+          echo "Apply run: $RUN_ID"
+          wait_for_run "$RUN_ID" "Apply"
+
+          if [ "$SKIP_DESTROY" = "true" ]; then
+            echo "::warning::skip_destroy is set; leaving resources in place. See $RUN_LINK"
+            exit 0
+          fi
+
+          echo "Triggering destroy"
+          DESTROY_ID=$(curl -sf -X POST \
+            -H "Authorization: Bearer $TFC_TOKEN" \
+            -H "Content-Type: application/vnd.api+json" \
+            -d "{
+              \"data\": {
+                \"attributes\": {
+                  \"message\": \"Acceptance destroy for $COMMIT_SHA\",
+                  \"is-destroy\": true
+                },
+                \"type\": \"runs\",
+                \"relationships\": {
+                  \"workspace\": {\"data\": {\"type\": \"workspaces\", \"id\": \"$WS_ID\"}}
+                }
+              }
+            }" \
+            "https://app.terraform.io/api/v2/runs" \
+            | jq -r '.data.id')
+          echo "Destroy run: $DESTROY_ID"
+          wait_for_run "$DESTROY_ID" "Destroy"
