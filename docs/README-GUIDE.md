@@ -59,3 +59,8 @@ Once wrapped, run `terraform-docs .` to refresh, and commit the result.
 CI runs markdownlint and Vale (prose) against `README.md`, plus a required-sections
 check, via the shared `readme-quality` workflow. See the template at
 [`templates/README.template.md`](../templates/README.template.md).
+
+Modules also ship credential-free unit tests (`tests/*.tftest.hcl`), run by the
+`test` job in the repository's `terraform.yml`. Live acceptance against real AWS
+is a separate, authorized step, not part of pull request CI; see the module
+testing section in [`TODO.md`](../TODO.md).
