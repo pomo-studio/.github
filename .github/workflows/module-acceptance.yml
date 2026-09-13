@@ -99,24 +99,11 @@ jobs:
           WS_ID=$(tfc "https://app.terraform.io/api/v2/organizations/$TFC_ORGANIZATION/workspaces/$TFC_WORKSPACE" | jq -r '.data.id')
           echo "Workspace $TFC_WORKSPACE: $WS_ID"
 
-          # Prefer a VCS run for this exact commit so the plan matches the
-          # dispatch. On a re-dispatch there is none, so queue a fresh run.
-          RUN_ID=""
-          for i in $(seq 1 12); do
-            RUN_ID=$(tfc "https://app.terraform.io/api/v2/workspaces/$WS_ID/runs?page%5Bsize%5D=10" \
-              | jq -r --arg sha "$COMMIT_SHA" '.data[] | select(.attributes["source-version"] == $sha) | .id' \
-              | head -1)
-            [ -n "$RUN_ID" ] && break
-            sleep 5
-          done
-
-          if [ -n "$RUN_ID" ]; then
-            echo "Using the VCS run for $COMMIT_SHA: $RUN_ID"
-          else
-            echo "No VCS run for $COMMIT_SHA; queuing a new run"
-            RUN_ID=$(queue_run false "Acceptance apply for $COMMIT_SHA")
-            echo "Queued apply run: $RUN_ID"
-          fi
+          # Always queue a fresh run. Reusing a VCS run for the commit is
+          # unreliable: an earlier failed or superseded run for the same commit
+          # would be picked up and fail the acceptance without applying.
+          RUN_ID=$(queue_run false "Acceptance apply for $COMMIT_SHA")
+          echo "Queued apply run: $RUN_ID"
 
           APPLY_STATUS=0
           wait_for_run "$RUN_ID" "Apply" || APPLY_STATUS=1
