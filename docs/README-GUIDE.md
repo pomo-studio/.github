@@ -62,5 +62,5 @@ check, via the shared `readme-quality` workflow. See the template at
 
 Modules also ship credential-free unit tests (`tests/*.tftest.hcl`), run by the
 `test` job in the repository's `terraform.yml`. Live acceptance against real AWS
-is a separate, authorized step, not part of pull request CI; see the module
-testing section in [`TODO.md`](../TODO.md).
+is a separate, authorized step, not part of pull request CI; see
+[Module Testing](MODULE-TESTING.md).
