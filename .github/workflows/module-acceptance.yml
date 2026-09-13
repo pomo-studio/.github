@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
-      - name: Apply, assert, then destroy
+      - name: Apply, then destroy, in Terraform Cloud
         env:
           TFC_TOKEN: ${{ secrets.TF_API_TOKEN }}
           TFC_ORGANIZATION: ${{ inputs.organization }}
@@ -53,9 +53,20 @@ jobs:
           COMMIT_SHA: ${{ github.sha }}
           RUN_LINK: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
 
           tfc() { curl -sf -H "Authorization: Bearer $TFC_TOKEN" "$@"; }
+
+          # Queue a run in the workspace. With no configuration version, Terraform
+          # Cloud uses the workspace's latest configuration, which is the branch head.
+          queue_run() {
+            local destroy=$1 message=$2
+            curl -sf -X POST \
+              -H "Authorization: Bearer $TFC_TOKEN" \
+              -H "Content-Type: application/vnd.api+json" \
+              -d "{\"data\":{\"attributes\":{\"message\":\"$message\",\"is-destroy\":$destroy},\"type\":\"runs\",\"relationships\":{\"workspace\":{\"data\":{\"type\":\"workspaces\",\"id\":\"$WS_ID\"}}}}}" \
+              "https://app.terraform.io/api/v2/runs" | jq -r '.data.id'
+          }
 
           # Poll a run until terminal state, approving it when it waits for confirmation.
           wait_for_run() {
@@ -85,51 +96,44 @@ jobs:
             return 1
           }
 
-          # Resolve the workspace.
           WS_ID=$(tfc "https://app.terraform.io/api/v2/organizations/$TFC_ORGANIZATION/workspaces/$TFC_WORKSPACE" | jq -r '.data.id')
           echo "Workspace $TFC_WORKSPACE: $WS_ID"
 
-          # Find the run for this commit. Terraform Cloud creates it on push when
-          # the workspace is VCS-connected.
+          # Prefer a VCS run for this exact commit so the plan matches the
+          # dispatch. On a re-dispatch there is none, so queue a fresh run.
           RUN_ID=""
-          for i in $(seq 1 30); do
+          for i in $(seq 1 12); do
             RUN_ID=$(tfc "https://app.terraform.io/api/v2/workspaces/$WS_ID/runs?page%5Bsize%5D=10" \
               | jq -r --arg sha "$COMMIT_SHA" '.data[] | select(.attributes["source-version"] == $sha) | .id' \
               | head -1)
             [ -n "$RUN_ID" ] && break
-            echo "Waiting for a run for $COMMIT_SHA ($i/30)"
-            sleep 10
+            sleep 5
           done
 
-          if [ -z "$RUN_ID" ]; then
-            echo "::error::No Terraform Cloud run found for $COMMIT_SHA. Is $TFC_WORKSPACE VCS-connected to this repository?"
-            exit 1
+          if [ -n "$RUN_ID" ]; then
+            echo "Using the VCS run for $COMMIT_SHA: $RUN_ID"
+          else
+            echo "No VCS run for $COMMIT_SHA; queuing a new run"
+            RUN_ID=$(queue_run false "Acceptance apply for $COMMIT_SHA")
+            echo "Queued apply run: $RUN_ID"
           fi
-          echo "Apply run: $RUN_ID"
-          wait_for_run "$RUN_ID" "Apply"
+
+          APPLY_STATUS=0
+          wait_for_run "$RUN_ID" "Apply" || APPLY_STATUS=1
 
           if [ "$SKIP_DESTROY" = "true" ]; then
             echo "::warning::skip_destroy is set; leaving resources in place. See $RUN_LINK"
-            exit 0
+            exit "$APPLY_STATUS"
           fi
 
           echo "Triggering destroy"
-          DESTROY_ID=$(curl -sf -X POST \
-            -H "Authorization: Bearer $TFC_TOKEN" \
-            -H "Content-Type: application/vnd.api+json" \
-            -d "{
-              \"data\": {
-                \"attributes\": {
-                  \"message\": \"Acceptance destroy for $COMMIT_SHA\",
-                  \"is-destroy\": true
-                },
-                \"type\": \"runs\",
-                \"relationships\": {
-                  \"workspace\": {\"data\": {\"type\": \"workspaces\", \"id\": \"$WS_ID\"}}
-                }
-              }
-            }" \
-            "https://app.terraform.io/api/v2/runs" \
-            | jq -r '.data.id')
+          DESTROY_ID=$(queue_run true "Acceptance destroy for $COMMIT_SHA")
           echo "Destroy run: $DESTROY_ID"
-          wait_for_run "$DESTROY_ID" "Destroy"
+
+          DESTROY_STATUS=0
+          wait_for_run "$DESTROY_ID" "Destroy" || DESTROY_STATUS=1
+
+          if [ "$APPLY_STATUS" -ne 0 ] || [ "$DESTROY_STATUS" -ne 0 ]; then
+            echo "::error::Acceptance failed (apply=$APPLY_STATUS destroy=$DESTROY_STATUS)"
+            exit 1
+          fi
