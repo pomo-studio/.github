@@ -1,0 +1,59 @@
+name: Dependabot maintenance
+
+# Reusable workflow: keep generated docs in sync with dependency bumps and
+# let safe (minor/patch) updates merge themselves.
+#
+# Called by each repository from a `pull_request_target` stub so the run has a
+# token that can write back to the Dependabot branch.
+
+on:
+  workflow_call:
+    inputs:
+      terraform_docs_version:
+        description: terraform-docs version to install
+        type: string
+        default: "0.20.0"
+    secrets:
+      token:
+        description: >-
+          Optional token (fine-grained PAT or GitHub App) with contents:write and
+          pull_requests:write. Needed so the docs commit re-triggers checks on
+          branches with required status checks. Falls back to GITHUB_TOKEN.
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  maintain:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the pull request branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.token != '' && secrets.token || github.token }}
+
+      - name: Regenerate the terraform-docs README
+        if: ${{ hashFiles('.terraform-docs.yml') != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          GOBIN="${RUNNER_TEMP}/bin" go install "github.com/terraform-docs/terraform-docs@v${{ inputs.terraform_docs_version }}"
+          "${RUNNER_TEMP}/bin/terraform-docs" .
+          if git diff --quiet -- README.md; then
+            echo "README already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "docs: regenerate README for dependency update"
+          git push
+
+      - name: Enable auto-merge (squash)
+        env:
+          GH_TOKEN: ${{ secrets.token != '' && secrets.token || github.token }}
+        run: gh pr merge --auto --squash "${{ github.event.pull_request.number }}"
