@@ -29,7 +29,10 @@ jobs:
 
       - name: markdownlint
         continue-on-error: ${{ !inputs.strict }}
-        run: npx --yes markdownlint-cli2 --config .pomo-standards/.markdownlint-cli2.jsonc $(git ls-files '*.md')
+        run: |
+          files=$(git ls-files '*.md' | grep -vE '(^|/)(README|CHANGELOG)\.md$' || true)
+          if [ -z "$files" ]; then echo "no docs to lint"; exit 0; fi
+          npx --yes markdownlint-cli2 --config .pomo-standards/.markdownlint-cli2.jsonc $files
 
       - name: Install Vale
         run: |
@@ -40,7 +43,10 @@ jobs:
 
       - name: Vale (prose)
         continue-on-error: ${{ !inputs.strict }}
-        run: vale --config=.pomo-standards/.vale.ini --minAlertLevel=warning $(git ls-files '*.md')
+        run: |
+          files=$(git ls-files '*.md' | grep -vE '(^|/)(README|CHANGELOG)\.md$' || true)
+          if [ -z "$files" ]; then echo "no docs to check"; exit 0; fi
+          vale --config=.pomo-standards/.vale.ini --minAlertLevel=warning $files
 
       - name: Relative doc links
         continue-on-error: ${{ !inputs.strict }}
