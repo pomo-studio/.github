@@ -32,7 +32,7 @@ jobs:
         run: |
           files=$(git ls-files '*.md' | grep -vE '(^|/)(README|CHANGELOG)\.md$' || true)
           if [ -z "$files" ]; then echo "no docs to lint"; exit 0; fi
-          npx --yes markdownlint-cli2 --config .pomo-standards/.markdownlint-cli2.jsonc $files
+          npx --yes markdownlint-cli2 --config .pomo-standards/.markdownlint-docs.jsonc $files
 
       - name: Install Vale
         run: |
