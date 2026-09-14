@@ -1,0 +1,63 @@
+name: Docs quality
+
+# Reusable: lint every Markdown file, check relative links, and fail on a
+# tracked TODO or ROADMAP file. Callers pass strict: true to block.
+
+on:
+  workflow_call:
+    inputs:
+      strict:
+        description: Fail the job when findings exist
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Check out the shared standards
+        uses: actions/checkout@v4
+        with:
+          repository: pomo-studio/.github
+          path: .pomo-standards
+
+      - name: markdownlint
+        continue-on-error: ${{ !inputs.strict }}
+        run: npx --yes markdownlint-cli2 --config .pomo-standards/.markdownlint-cli2.jsonc $(git ls-files '*.md')
+
+      - name: Install Vale
+        run: |
+          curl -fsSL "https://github.com/errata-ai/vale/releases/download/v3.21.0/vale_3.21.0_Linux_64-bit.tar.gz" -o /tmp/vale.tar.gz
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf /tmp/vale.tar.gz -C "$RUNNER_TEMP/bin" vale
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Vale (prose)
+        continue-on-error: ${{ !inputs.strict }}
+        run: vale --config=.pomo-standards/.vale.ini --minAlertLevel=warning $(git ls-files '*.md')
+
+      - name: Relative doc links
+        continue-on-error: ${{ !inputs.strict }}
+        run: bash .pomo-standards/scripts/check-doc-links.sh
+
+      - name: No TODO or ROADMAP files
+        run: |
+          set -euo pipefail
+          if git ls-files | grep -iE '(^|/)(TODO|ROADMAP)(\.[A-Za-z0-9]+)?$'; then
+            echo "::error::a TODO or ROADMAP file is tracked; file an issue instead"
+            exit 1
+          fi
+
+      - name: No TODO or FIXME comments
+        continue-on-error: ${{ !inputs.strict }}
+        run: |
+          if git grep -nIE '\b(TODO|FIXME|XXX)\b' -- ':!.github/*' ':!*.lock' ':!package-lock.json'; then
+            echo "::error::a TODO or FIXME comment is tracked; file an issue instead"
+            exit 1
+          fi
