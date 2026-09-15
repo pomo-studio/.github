@@ -1,36 +1,39 @@
 # postmodern.tf
 
-Open-source AWS application patterns and Terraform building blocks for developers
-moving beyond a working prototype.
+Terraform components and architectural patterns for building applications on AWS.
 
-Our reference applications and examples connect web delivery, identity, APIs,
-data, and events. Inspect how the services fit together, understand the choices,
-and adapt the architecture to your application.
+Start with a blueprint for a complete system, or use individual components in
+an architecture of your own. Explore how the services fit together, understand
+the choices, and adapt the design to your application.
 
-## Find Your Starting Point
+## Find your starting point
 
-| You want to... | Start here |
+| You want to… | Start here |
 | --- | --- |
-| Choose an approach for your application | [Architecture patterns](https://pomo.dev/compositions) |
-| Find application capabilities or deployment automation | [Module catalogue](https://pomo.dev/#patterns) |
-| Explore a working SSR application | [Live demo](https://ssr.pomo.dev) and [source](https://github.com/pomo-studio/pomo-ssr) |
+| See how the pieces form a system | [Blueprints](https://pomo.dev/blueprints): architectures assembled from patterns and components |
+| Understand an architectural approach | [Patterns](https://pomo.dev/patterns): the ideas, tradeoffs, and diagrams behind the designs |
+| Find a Terraform building block | [Components](https://pomo.dev/modules): modules with documentation, examples, and Registry links |
 
-Application capabilities cover delivery, authentication, APIs, data, and events.
-Deployment automation handles workload identity and Terraform Cloud workspaces.
-The catalogue links to each module's documentation, source, and Registry entry.
+The collection covers web delivery, identity, APIs, data, and events, alongside
+workload identity and deployment automation.
 
-## Beyond Deployment
+## Testing and releases
 
-Managed services and serverless compute are our focus. Versioned releases,
-automated checks, and migration guidance help you evaluate changes over time,
-while keeping your architecture understandable and yours to operate.
+A useful module needs more than a successful deployment. You need to understand
+how it behaves when you change it, roll it back, or encounter a failure.
 
-## People And Contributions
+Check each component's repository for its supported configurations, automated
+checks, and validation evidence. For example, the CloudFront edge router has
+[reusable AWS integration tests](https://github.com/pomo-studio/terraform-aws-cloudfront-edge-router/tree/main/tests/live)
+for traffic shifts, sticky sessions, origin failures, and recovery. Its
+[published release evidence](https://github.com/pomo-studio/terraform-aws-cloudfront-edge-router/releases/tag/v0.1.1)
+includes testing of the exact package downloaded from the Terraform Registry.
 
-Supported by [postmodern.](https://pomo.studio), we use these building blocks in
-our own applications. Share a use case, improve an explanation, or contribute a
-tested fix.
+## People and contributions
 
-[Contribute](https://github.com/pomo-studio/.github/blob/main/CONTRIBUTING.md) |
-[Report a vulnerability privately](https://github.com/pomo-studio/.github/blob/main/SECURITY.md) |
+Supported by [postmodern.](https://pomo.studio). Share a use case, improve an
+explanation, report a bug, or contribute a tested fix.
+
+[Contribute](https://github.com/pomo-studio/.github/blob/main/CONTRIBUTING.md) ·
+[Report a vulnerability privately](https://github.com/pomo-studio/.github/blob/main/SECURITY.md) ·
 [About the project](https://pomo.dev/about)
