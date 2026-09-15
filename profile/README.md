@@ -31,8 +31,8 @@ includes testing of the exact package downloaded from the Terraform Registry.
 
 ## People and contributions
 
-Supported by [postmodern.](https://pomo.studio). Share a use case, improve an
-explanation, report a bug, or contribute a tested fix.
+Created by [André Pitanga](https://pomo.studio). Contributions are welcome.
+Share a use case, improve an explanation, report a bug, or contribute a tested fix.
 
 [Contribute](https://github.com/pomo-studio/.github/blob/main/CONTRIBUTING.md) ·
 [Report a vulnerability privately](https://github.com/pomo-studio/.github/blob/main/SECURITY.md) ·
